@@ -60,6 +60,41 @@ jobs:
 
       - name: Configure CMake
         run: cmake -B ${{ env.build }}
+      - name: Restore from cache and run vcpkg
+        uses: lukka/run-vcpkg@v4
+        with:
+          vcpkgArguments: ${{env.VCPKG_PACKAGES}}
+          vcpkgDirectory: '${{ github.workspace }}\vcpkg'
+          appendedCacheKey: ${{ matrix.config.vcpkg_triplet }}
+          vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
+          vcpkgTriplet: ${{ matrix.config.vcpkg_triplet }}
+
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v1
+        with:
+          path: ./build/Qt/${{ matrix.qt_ver }}/${{ matrix.config.qt_arch_install }}
+          key: ${{ runner.os }}-QtCache/${{ matrix.qt_ver }}/${{ matrix.config.qt_arch }}
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: ${{ matrix.qt_ver }}
+          target:  ${{ matrix.qt_target }}
+          arch: ${{ matrix.config.qt_arch }}
+          dir: '${{ github.workspace }}/build/'
+          modules: 'qtscript'
+          cached: ${{ steps.cache-qt.outputs.cache-hit }}
+
+      - name: Configure
+        working-directory: build
+        shell: pwsh
+        run: |
+          cmake ..  ${{matrix.config.generator}}  `
+          -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake"  `
+          -DENABLE_OPENSSL=ON `
+          -DCMAKE_BUILD_TYPE=Release  `
+          -DRUN_IN_PLACE=${{ contains(matrix.type, 'portable') }}
 
       # Build is not required unless generated source files are used
       # - name: Build CMake
