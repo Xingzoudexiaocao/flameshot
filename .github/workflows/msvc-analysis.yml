@@ -83,7 +83,7 @@ jobs:
         with:
           cmakeBuildDirectory: ${{ env.build }}
           ignoreSystemHeaders: true
-          ignoredIncludePaths: ${{ github.workspace }}\external;${{ env.build }}
+          ignoredIncludePaths: ${{ github.workspace }}\flameshot\external;${{ env.build }}
           # Ruleset file that will determine what checks will be run
           ruleset: NativeRecommendedRules.ruleset
 
